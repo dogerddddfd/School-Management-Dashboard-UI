@@ -2,20 +2,19 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import {
-   assignmentsData,
-   role,
-} from "@/lib/data";
+import prisma from "@/lib/prisma";
+import { ITEM_PER_PAGE } from "@/lib/settings";
+import { Assignment, Class, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
-import Link from "next/link";
+import { currentUserId, role } from "@/lib/utils";
 
-type Assignment = {
-   id: number;
-   subject: string;
-   class: string;
-   teacher: string;
-   dueDate: string;
-};
+type AssignmentList = Assignment & {
+   lesson: {
+      subject: Subject;
+      class: Class;
+      teacher: Teacher;
+   };
+}
 
 const columns = [
    {
@@ -36,25 +35,106 @@ const columns = [
       accessor: "dueDate",
       className: "hidden md:table-cell",
    },
-   {
+   ...(["admin", "teacher"].includes(role as string) ? [{
       header: "Actions",
       accessor: "action",
-   },
+   }] : []
+   )
 ];
 
-const AssignmentListPage = () => {
-   const renderRow = (item: Assignment) => (
+const AssignmentListPage = async ({
+   searchParams
+}: {
+   searchParams: { [key: string]: string | undefined }
+}) => {
+   const { page, ...queryParams } = searchParams
+
+   const p = page ? parseInt(page) : 1
+
+   //url params condition
+   const query: Prisma.AssignmentWhereInput = {};
+   query.lesson = {}
+
+   if (queryParams) {
+      for (const [key, value] of Object.entries(queryParams)) {
+         if (value) {
+            switch (key) {
+               case "classId":
+                  query.lesson.classId = parseInt(value)
+                  break;
+               case "teacherId":
+                  query.lesson.teacherId = value
+                  break;
+               case "search":
+                  query.lesson.subject = {
+                     name: { contains: value, mode: "insensitive" },
+                  }
+                  break;
+               default:
+                  break;
+            }
+         }
+      }
+   }
+
+   //role conditions
+   switch (role) {
+      case "admin":
+         break;
+      case 'teacher':
+         query.lesson.teacherId = currentUserId!
+         break
+      case 'student':
+         query.lesson.class = {
+            students: {
+               some: {
+                  id: currentUserId!
+               }
+            }
+         }
+         break;
+      case 'parent':
+         query.lesson.class = {
+            students: {
+               some: {
+                  parentId: currentUserId!
+               }
+            }
+         }
+         break
+      default:
+         break
+   }
+
+   const [data, count] = await prisma.$transaction([
+      prisma.assignment.findMany({
+         where: query,
+         include: {
+            lesson: {
+               select: {
+                  subject: { select: { name: true } },
+                  teacher: { select: { name: true, surname: true } },
+                  class: { select: { name: true } },
+               },
+            },
+         },
+         take: ITEM_PER_PAGE,
+         skip: ITEM_PER_PAGE * (p - 1),
+      }),
+      prisma.assignment.count({ where: query }),
+   ]);
+   const renderRow = (item: AssignmentList) => (
       <tr
          key={item.id}
          className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
       >
-         <td className="flex items-center gap-4 p-4">{item.subject}</td>
-         <td>{item.class}</td>
-         <td className="hidden md:table-cell">{item.teacher}</td>
-         <td className="hidden md:table-cell">{item.dueDate}</td>
+         <td className="flex items-center gap-4 p-4">{item.lesson.subject.name}</td>
+         <td>{item.lesson.class.name}</td>
+         <td className="hidden md:table-cell">{item.lesson.teacher.name + " " + item.lesson.teacher.surname}</td>
+         <td className="hidden md:table-cell">{new Intl.DateTimeFormat("en-US").format(item.dueDate)}</td>
          <td>
             <div className="flex items-center gap-2">
-               {role === "admin" && (
+               {["admin", "teacher"].includes(role as string) && (
                   <>
                      <FormModal table="assignment" type="update" id={item.id} />
                      <FormModal table="assignment" type="delete" id={item.id} />
@@ -70,7 +150,8 @@ const AssignmentListPage = () => {
          {/* TOP */}
          <div className="flex items-center justify-between">
             <h1 className="hidden md:block text-lg font-semibold">
-               All Assignments
+               {role === 'admin' ? `All Assignments` : "My Assignments"}
+
             </h1>
             <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
                <TableSearch />
@@ -88,9 +169,9 @@ const AssignmentListPage = () => {
             </div>
          </div>
          {/* LIST */}
-         <Table columns={columns} renderRow={renderRow} data={assignmentsData} />
+         <Table columns={columns} renderRow={renderRow} data={data} />
          {/* PAGINATION */}
-         <Pagination />
+         <Pagination page={p} count={count} />
       </div>
    );
 };

@@ -69,7 +69,6 @@ const SubjectListPage = async ({
       })
    ])
 
-   console.log(data)
 
 
    const renderRow = (item: SubjectList) => (

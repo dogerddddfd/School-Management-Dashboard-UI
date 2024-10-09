@@ -1,4 +1,4 @@
-import { role } from "@/lib/data";
+import { currentUser } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ const menuItems = [
       {
         icon: "/home.png",
         label: "Home",
-        href: "/",
+        href: "",
         visible: ["admin", "teacher", "student", "parent"],
       },
       {
@@ -66,12 +66,12 @@ const menuItems = [
         href: "/list/results",
         visible: ["admin", "teacher", "student", "parent"],
       },
-      {
-        icon: "/attendance.png",
-        label: "Attendance",
-        href: "/list/attendance",
-        visible: ["admin", "teacher", "student", "parent"],
-      },
+      // {
+      //   icon: "/attendance.png",
+      //   label: "Attendance",
+      //   href: "/list/attendance",
+      //   visible: ["admin", "teacher", "student", "parent"],
+      // },
       {
         icon: "/calendar.png",
         label: "Events",
@@ -117,7 +117,9 @@ const menuItems = [
   },
 ];
 
-const Menu = () => {
+const Menu = async () => {
+  const user = await currentUser()
+  const role = user?.publicMetadata.role as string
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
@@ -125,6 +127,14 @@ const Menu = () => {
           <span className="hidden lg:block text-gray-400 font-light my-4">{i.title}</span>
           {i.items.map(item => {
             if (item.visible.includes(role)) {
+              if (item.label === "Home") {
+                return (
+                  <Link href={`/${role}`} key={item.label} className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight">
+                    <Image src={item.icon} alt="" width={20} height={20} />
+                    <span className="hidden lg:block">{item.label}</span>
+                  </Link>
+                )
+              }
               return (
                 <Link href={item.href} key={item.label} className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight">
                   <Image src={item.icon} alt="" width={20} height={20} />
