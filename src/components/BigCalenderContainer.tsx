@@ -1,14 +1,7 @@
-"use client"
-
-import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar'
-import moment from 'moment'
-import { calendarEvents } from '@/lib/data'
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { useState } from 'react';
 import prisma from '@/lib/prisma';
-import { title } from 'process';
-
-const localizer = momentLocalizer(moment)
+import BigCalendar from './BigCalender';
+import { adjustScheduleToCurrentWeek } from '@/lib/utils';
 
 const BigCalendarContainer = async ({
    type,
@@ -32,6 +25,8 @@ const BigCalendarContainer = async ({
       start: lesson.startTime,
       end: lesson.endTime,
    }))
+
+   const schedule = adjustScheduleToCurrentWeek(data);
    return (
       <div className="">
          <BigCalendar data={schedule} />
@@ -40,4 +35,4 @@ const BigCalendarContainer = async ({
 
 }
 
-export default BigCalenderContainer
+export default BigCalendarContainer
