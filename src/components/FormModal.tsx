@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -15,11 +15,11 @@ const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
 });
 
 const forms: {
-   [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
+   [key: string]: (setOpen: Dispatch<SetStateAction<boolean>>, type: "create" | "update", data?: any,) => JSX.Element;
 } = {
-   teacher: (type, data) => <TeacherForm type={type} data={data} />,
-   student: (type, data) => <StudentForm type={type} data={data} />,
-   subject: (type, data) => <SubjectForm type={type} data={data} />
+   teacher: (setOpen, type, data) => <TeacherForm type={type} data={data} setOpen={setOpen} />,
+   student: (setOpen, type, data) => <StudentForm type={type} data={data} setOpen={setOpen} />,
+   subject: (setOpen, type, data) => <SubjectForm type={type} data={data} setOpen={setOpen} />
 };
 
 const FormModal = ({ table, type, data, id }: {
@@ -53,7 +53,7 @@ const FormModal = ({ table, type, data, id }: {
             <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">Delete</button>
          </form>
       ) : type === "create" || type === "update" ? (
-         forms[table](type, data)
+         forms[table](setOpen, type, data,)
       ) : (
          "Form not found!"
       );
