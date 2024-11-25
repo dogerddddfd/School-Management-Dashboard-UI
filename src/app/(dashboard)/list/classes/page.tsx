@@ -1,4 +1,3 @@
-import FormModal from "@/components/FormModal"
 import Pagination from "@/components/Pagination"
 import Table from "@/components/Table"
 import TableSearch from "@/components/TableSearch"
@@ -7,6 +6,7 @@ import { ITEM_PER_PAGE } from "@/lib/settings"
 import { Class, Prisma, Teacher } from "@prisma/client"
 import Image from "next/image"
 import { role } from "@/lib/utils"
+import FormContainer from "@/components/FormContainer"
 
 type ClassList = Class & { supervisor: Teacher }
 
@@ -91,14 +91,14 @@ const ClassListPage = async ({
       >
          <td className="flex items-center gap-4 p-4">{item.name}</td>
          <td className="hidden md:table-cell">{item.capacity}</td>
-         <td className="hidden md:table-cell">{item.name[0]}</td>
+         <td className="hidden md:table-cell">{item.gradeId}</td>
          <td className="hidden md:table-cell">{item.supervisor.name}</td>
          <td>
             <div className="flex items-center gap-2">
                {role === "admin" && (
                   <>
-                     <FormModal table="class" type="update" id={item.id} />
-                     <FormModal table="class" type="delete" id={item.id} />
+                    <FormContainer table="class" type="update" data={item} />
+                    <FormContainer table="class" type="delete" id={item.id} />
                   </>
                )}
             </div>
@@ -121,7 +121,7 @@ const ClassListPage = async ({
                      <Image src="/sort.png" alt="" width={14} height={14} />
                   </button>
                   {role === "admin" && (
-                     <FormModal table="class" type="create" />
+                     <FormContainer table="class" type="create" />
                   )}
                </div>
             </div>

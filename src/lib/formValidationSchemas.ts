@@ -1,10 +1,13 @@
 import * as z from 'zod';
 
 export const teacherSchema = z.object({
+   id: z.coerce.string().optional(),
    username: z
       .string()
       .min(3, { message: "Username must be at least 3 characters long!" })
       .max(20, { message: "Username must be at most 20 characters long!" }),
+   name: z.string().min(1, { message: "Name is required!" }),
+   surname: z.string().min(1, { message: "Surname is required!" }),
    email: z.string().email({ message: "Invalid email address!" }),
    password: z
       .string()
@@ -14,9 +17,10 @@ export const teacherSchema = z.object({
    phone: z.string().min(1, { message: "Phone is required!" }),
    address: z.string().min(1, { message: "Address is required!" }),
    bloodType: z.string().min(1, { message: "Blood Type is required!" }),
-   // birthday: z.date({ message: "Birthday is required!" }),
+   birthday: z.date({ message: "Birthday is required!" }),
    sex: z.enum(["male", "female"], { message: "Sex is required!" }),
-   // img: z.instanceof(File, { message: "Image is required" }),
+   img: z.string().optional(),
+   subjects:z.array(z.string()).optional(),//subject ids
 });
 
 export type TeacherSchema = z.infer<typeof teacherSchema>
@@ -34,3 +38,13 @@ export const subjectSchema = z.object({
  });
 
 export type SubjectSchema = z.infer<typeof subjectSchema>;
+
+export const classSchema = z.object({
+   id: z.coerce.number().optional(),
+   name: z.string().min(1, { message: "Class name is required!" }),
+   capacity:z.coerce.number().min(1, { message: "Capacity is required!" }),
+   gradeId: z.coerce.number().min(1, { message: "Grade name is required!" }),
+   supervisorId: z.coerce.string().optional(),
+})
+
+export type ClassSchema = z.infer<typeof classSchema>;

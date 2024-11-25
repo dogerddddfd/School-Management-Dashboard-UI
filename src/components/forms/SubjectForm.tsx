@@ -4,7 +4,7 @@ import InputField from '../InputField';
 import { subjectSchema, SubjectSchema } from '@/lib/formValidationSchemas';
 import { createSubject, updateSubject } from '@/lib/actions';
 import { useFormState } from 'react-dom';
-import { Dispatch, SetStateAction, useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 
@@ -35,9 +35,45 @@ const SubjectForm = ({
       }
    );
 
+   const [selectedTeachers, setSelectedTeachers] = useState<string[]>(data?.teachers || []);
+
+   const onSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const options = event.target.options;
+      const value: string[] = [];
+      for (let i = 0; i < options.length; i++) {
+         if (options[i].selected) {
+            value.push(options[i].value);
+         }
+      }
+      console.log(value);
+      setSelectedTeachers(value);
+   };
+
    const onSubmit = handleSubmit(data => {
-      console.log(data)
-      formAction(data)
+      let t = selectedTeachers
+      console.log(t[0])
+      if (typeof selectedTeachers[0] === 'object') {
+         t = []
+         selectedTeachers.forEach(teacher => {
+            // @ts-ignore
+            if (teacher.id) {
+               // @ts-ignore
+               t.push(teacher.id)
+            }
+         })
+      }
+
+      const submitData: {
+         name: string,
+         id?: number,
+         teachers: string[]
+      } = {
+         ...data,
+         teachers: t, // 将选中的教师传递到提交的数据中
+      };
+      console.log(selectedTeachers)
+      console.log(submitData)
+      formAction(submitData)
    })
 
    const router = useRouter()
@@ -83,11 +119,12 @@ const SubjectForm = ({
                   className='ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full'
                   multiple
                   {...register("teachers")}
-                  defaultValue={data?.teachers}
+                  value={selectedTeachers} // 绑定状态
+                  onChange={onSelectChange} // 处理选择变化
                >
                   {teachers.map(
                      (teacher: { id: string, name: string; surname: string }) => (
-                        <option value={teacher.id}>
+                        <option value={teacher.id} key={teacher.id}>
                            {teacher.name + " " + teacher.surname}
                         </option>
                      ))}
